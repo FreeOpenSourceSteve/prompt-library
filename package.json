@@ -1,0 +1,67 @@
+{
+  "name": "prompt-library",
+  "version": "0.1.1",
+  "private": true,
+  "description": "A local-only browser extension for saving and organizing plain-text AI prompts.",
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "predev": "npm run notices",
+    "dev": "vite build --watch --mode chrome",
+    "dev:firefox": "npm run notices && vite build --watch --mode firefox",
+    "dev:safari": "npm run notices && vite build --watch --mode safari",
+    "build": "node scripts/build.mjs",
+    "build:chrome": "node scripts/build.mjs chrome",
+    "build:firefox": "node scripts/build.mjs firefox",
+    "build:safari": "node scripts/build.mjs safari",
+    "safari:project": "npm run build:safari && node scripts/safari-project.mjs",
+    "notices": "node scripts/generate-notices.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "npm run build && playwright test",
+    "test:firefox": "node tests/firefox/smoke.mjs",
+    "test:webkit": "playwright test --config playwright.webkit.config.ts",
+    "verify:build": "node scripts/verify-build.mjs",
+    "check": "npm run format:check && npm run lint && npm run test && npm run build",
+    "package": "npm run build && node scripts/package.mjs"
+  },
+  "overrides": {
+    "minimatch": "11.0.4"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.8",
+    "@types/chrome": "0.3.7",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "10.14.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "fflate": "0.8.3",
+    "globals": "17.14.0",
+    "jsdom": "29.1.1",
+    "prettier": "3.9.10",
+    "selenium-webdriver": "4.51.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1",
+    "vite": "8.3.5",
+    "vitest": "5.1.0"
+  }
+}

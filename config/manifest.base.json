@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Prompt Library",
+  "version": "0.1.1",
+  "description": "Save, organize, and copy plain-text AI prompts. Private, local, and offline.",
+  "permissions": ["storage", "clipboardWrite"],
+  "commands": {
+    "speed-copy-1": {
+      "suggested_key": { "mac": "Command+MacCtrl+Z" },
+      "description": "Copy speed-copy prompt 1"
+    },
+    "speed-copy-2": {
+      "suggested_key": { "mac": "Command+MacCtrl+X" },
+      "description": "Copy speed-copy prompt 2"
+    },
+    "speed-copy-3": {
+      "suggested_key": { "mac": "Command+MacCtrl+C" },
+      "description": "Copy speed-copy prompt 3"
+    }
+  },
+  "action": {
+    "default_title": "Prompt Library",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'"
+  }
+}
