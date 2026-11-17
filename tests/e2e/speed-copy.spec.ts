@@ -150,9 +150,14 @@ test('registers shortcuts and copies through the real offscreen page with the po
   const registered = commands.filter((command) =>
     command.name?.startsWith('speed-copy-'),
   );
-  expect(registered).toHaveLength(3);
-  if (process.platform === 'darwin')
-    expect(registered.every((command) => command.shortcut)).toBe(true);
+  expect(registered.map((command) => command.name).sort()).toEqual([
+    'speed-copy-1',
+    'speed-copy-2',
+    'speed-copy-3',
+  ]);
+  // Headless desktops can leave OS key bindings unassigned. Verify the actual
+  // registered commands here; config tests check the suggested macOS bindings.
+  // The real offscreen clipboard path below must still succeed on every OS.
   await page.close();
   const raw = '  # Speed copy\n<script>literal</script>\n  ';
   // Exercise the packaged offscreen document, real clipboard permission, and
