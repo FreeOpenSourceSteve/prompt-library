@@ -1,10 +1,18 @@
 import {
   MAX_PROMPTS,
+  MAX_COMPONENTS,
+  SCHEMA_VERSION,
   MAX_STORAGE_BYTES,
   MAX_TITLE_LENGTH,
   STORAGE_KEY,
 } from '../domain/models';
-import type { Library, Prompt, Response, SpeedCopy } from '../domain/models';
+import type {
+  Component,
+  Library,
+  Prompt,
+  Response,
+  SpeedCopy,
+} from '../domain/models';
 import {
   errorMessage,
   parseLibrary,
@@ -12,9 +20,17 @@ import {
   validateBackup,
   validateId,
   validateInput,
+  validateComponentInput,
+  validateComponentUpdates,
+  validateNewComponents,
   validateRevision,
   validateSpeedCopySlot,
 } from '../domain/validation';
+import {
+  normalizedName,
+  referencingPrompts,
+  validateComposition,
+} from '../domain/composition';
 import {
   assignedSlot,
   assignSpeedCopy,
@@ -49,6 +65,8 @@ export class LibraryService {
     const library = parseLibrary(stored);
     let imported: number | undefined;
     let skipped: number | undefined;
+    let importedComponents: number | undefined;
+    let skippedComponents: number | undefined;
 
     switch (command.type) {
       case 'library:list': {
@@ -56,11 +74,12 @@ export class LibraryService {
         // writing on ordinary reads, and leave unrelated metadata untouched.
         if (
           stored !== undefined &&
-          (stored as Library).prompts.some(
-            (prompt, index) =>
-              prompt.tags.includes(SPEED_COPY_TAG) !==
-              library.prompts[index]?.tags.includes(SPEED_COPY_TAG),
-          )
+          ((stored as Library).schemaVersion !== SCHEMA_VERSION ||
+            (stored as Library).prompts.some(
+              (prompt, index) =>
+                prompt.tags.includes(SPEED_COPY_TAG) !==
+                library.prompts[index]?.tags.includes(SPEED_COPY_TAG),
+            ))
         ) {
           await this.persist(library);
         }
@@ -69,6 +88,8 @@ export class LibraryService {
       case 'prompt:create': {
         const now = new Date().toISOString();
         const id = crypto.randomUUID();
+        this.addComponents(library, command.newComponents, now);
+        this.updateComponents(library, command.componentUpdates);
         library.prompts.push({
           ...validateInput(command.input),
           id,
@@ -97,17 +118,23 @@ export class LibraryService {
           );
         }
         const input = validateInput(command.input);
+        this.addComponents(
+          library,
+          command.newComponents,
+          new Date().toISOString(),
+        );
+        this.updateComponents(library, command.componentUpdates);
         // The ! marker is managed separately; an assignment-only save must not
         // change revisions, timestamps, text, or other tags.
         const assignmentOnly =
           command.speedCopy !== undefined &&
           input.title === prompt.title &&
-          input.content === prompt.content &&
+          JSON.stringify(input.content) === JSON.stringify(prompt.content) &&
           JSON.stringify(input.tags) ===
             JSON.stringify(ordinaryTags(prompt.tags));
         if (!assignmentOnly)
           Object.assign(prompt, input, {
-            revision: prompt.revision + 1,
+            revision: validateRevision(prompt.revision + 1),
             updatedAt: new Date(
               Math.max(Date.now(), Date.parse(prompt.updatedAt)),
             ).toISOString(),
@@ -123,12 +150,25 @@ export class LibraryService {
       case 'prompt:duplicate': {
         const prompt = this.find(library, command.id);
         const now = new Date().toISOString();
-        const suffix = ' (copy)';
+        let suffix = ' (copy)';
+        let title =
+          prompt.title.slice(0, MAX_TITLE_LENGTH - suffix.length) + suffix;
+        const componentNames = new Set(
+          library.components.map((item) => normalizedName(item.name)),
+        );
+        for (
+          let index = 2;
+          componentNames.has(normalizedName(title));
+          index++
+        ) {
+          suffix = ` (copy ${index})`;
+          title =
+            prompt.title.slice(0, MAX_TITLE_LENGTH - suffix.length) + suffix;
+        }
         library.prompts.push({
           ...prompt,
           tags: ordinaryTags(prompt.tags),
-          title:
-            prompt.title.slice(0, MAX_TITLE_LENGTH - suffix.length) + suffix,
+          title,
           id: crypto.randomUUID(),
           revision: 1,
           createdAt: now,
@@ -139,6 +179,7 @@ export class LibraryService {
       case 'prompt:delete': {
         const prompt = this.find(library, command.id);
         this.checkRevision(prompt, command.revision);
+        this.checkReferences(library, 'prompt', prompt.id);
         library.prompts = library.prompts.filter(
           (item) => item.id !== prompt.id,
         );
@@ -148,12 +189,46 @@ export class LibraryService {
           ) as SpeedCopy;
         break;
       }
+      case 'component:create': {
+        const now = new Date().toISOString();
+        library.components.push({
+          ...validateComponentInput(command.input),
+          id: crypto.randomUUID(),
+          revision: 1,
+          createdAt: now,
+          updatedAt: now,
+        });
+        break;
+      }
+      case 'component:update': {
+        this.updateComponents(library, [
+          { id: command.id, revision: command.revision, input: command.input },
+        ]);
+        break;
+      }
+      case 'component:delete': {
+        const component = this.findComponent(library, command.id);
+        this.checkRevision(component, command.revision);
+        this.checkReferences(library, 'component', component.id);
+        library.components = library.components.filter(
+          (item) => item.id !== component.id,
+        );
+        break;
+      }
       case 'library:import': {
         const backup = validateBackup(command.backup);
         const ids = new Set(library.prompts.map((prompt) => prompt.id));
         const additions = backup.prompts.filter(
           (prompt) => !ids.has(prompt.id),
         );
+        const componentIds = new Set(library.components.map((item) => item.id));
+        const componentAdditions = backup.components.filter(
+          (item) => !componentIds.has(item.id),
+        );
+        importedComponents = componentAdditions.length;
+        skippedComponents =
+          backup.components.length - componentAdditions.length;
+        library.components.push(...componentAdditions);
         imported = additions.length;
         skipped = backup.prompts.length - additions.length;
         library.prompts.push(...additions);
@@ -178,7 +253,14 @@ export class LibraryService {
     return {
       ok: true,
       library,
-      ...(imported === undefined ? {} : { imported, skipped: skipped ?? 0 }),
+      ...(imported === undefined
+        ? {}
+        : {
+            imported,
+            skipped: skipped ?? 0,
+            importedComponents: importedComponents ?? 0,
+            skippedComponents: skippedComponents ?? 0,
+          }),
     };
   }
 
@@ -187,6 +269,12 @@ export class LibraryService {
       throw new Error(
         `Your library is limited to ${MAX_PROMPTS.toLocaleString('en-US')} prompts.`,
       );
+    if (library.components.length > MAX_COMPONENTS)
+      throw new Error(
+        `Your library is limited to ${MAX_COMPONENTS.toLocaleString('en-US')} components.`,
+      );
+    // Validate the merged graph, including ancestors affected by shared edits.
+    validateComposition(library);
     const bytes = new TextEncoder().encode(
       STORAGE_KEY + JSON.stringify(library),
     ).byteLength;
@@ -207,10 +295,64 @@ export class LibraryService {
     return prompt;
   }
 
-  private checkRevision(prompt: Prompt, revision: unknown): void {
+  private addComponents(library: Library, value: unknown, now: string): void {
+    const ids = new Set(
+      [...library.prompts, ...library.components].map((item) => item.id),
+    );
+    for (const input of validateNewComponents(value)) {
+      if (ids.has(input.id))
+        throw new Error(
+          'A new component ID already exists. Reopen the editor and try again.',
+        );
+      ids.add(input.id);
+      library.components.push({
+        ...input,
+        revision: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  }
+
+  private updateComponents(library: Library, value: unknown): void {
+    for (const update of validateComponentUpdates(value)) {
+      const component = this.findComponent(library, update.id);
+      this.checkRevision(component, update.revision);
+      Object.assign(component, update.input, {
+        revision: validateRevision(component.revision + 1),
+        updatedAt: new Date(
+          Math.max(Date.now(), Date.parse(component.updatedAt)),
+        ).toISOString(),
+      });
+    }
+  }
+
+  private findComponent(library: Library, id: unknown): Component {
+    const validId = validateId(id);
+    const component = library.components.find((item) => item.id === validId);
+    if (!component)
+      throw new Error(
+        'This component no longer exists. Reopen component management.',
+      );
+    return component;
+  }
+
+  private checkReferences(
+    library: Library,
+    type: 'component' | 'prompt',
+    id: string,
+  ): void {
+    const users = referencingPrompts(library, type, id);
+    if (users.length)
+      throw new Error(
+        `Used by “${users[0]?.title}”${users.length > 1 ? ` and ${users.length - 1} other prompts` : ''}. Remove its references before deleting it.`,
+      );
+  }
+
+  private checkRevision(prompt: Prompt | Component, revision: unknown): void {
     if (prompt.revision !== validateRevision(revision)) {
       throw new Error(
-        'This prompt changed in another tab. Your draft is still here. Copy it, then reopen the prompt to edit the latest version.',
+        `This ${'name' in prompt ? 'component' : 'prompt'} changed in another tab. Your draft is still here. Copy it, then reopen the ${'name' in prompt ? 'component' : 'prompt'} to edit the latest version.`,
       );
     }
   }

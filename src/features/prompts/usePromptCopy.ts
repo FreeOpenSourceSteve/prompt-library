@@ -4,13 +4,14 @@ import { errorMessage } from '../../domain/validation';
 
 export function usePromptCopy(
   prompt: Prompt,
+  resolveContent: (id: string) => string,
   onMessage: (message: string, error?: boolean) => void,
 ) {
   const [copying, setCopying] = useState(false);
   async function copy() {
     setCopying(true);
     try {
-      await navigator.clipboard.writeText(prompt.content);
+      await navigator.clipboard.writeText(resolveContent(prompt.id));
       onMessage(`Copied “${prompt.title}” to clipboard.`);
     } catch (error) {
       onMessage(

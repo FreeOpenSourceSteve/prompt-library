@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Library, SpeedCopySlot } from '../../domain/models';
+import { libraryContent } from '../../domain/prompts';
 import { SPEED_COPY_SLOTS } from '../../domain/models';
 import { errorMessage } from '../../domain/validation';
 import { TooltipButton } from '../../app/components/TooltipButton';
@@ -39,7 +40,7 @@ export function SpeedCopyButtons({
               if (!prompt) return;
               setCopying(slot);
               void navigator.clipboard
-                .writeText(prompt.content)
+                .writeText(libraryContent(library)(prompt.id))
                 .then(() => onMessage(`Copied “${prompt.title}” to clipboard.`))
                 .catch((error: unknown) =>
                   onMessage(

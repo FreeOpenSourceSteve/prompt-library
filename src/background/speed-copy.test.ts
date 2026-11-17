@@ -1,5 +1,5 @@
 import { expect, it, vi } from 'vitest';
-import { library, prompt } from '../../tests/fixtures';
+import { component, library, prompt } from '../../tests/fixtures';
 import type { LibraryService } from './library-service';
 import { registerSpeedCopyCommands } from './speed-copy';
 
@@ -39,7 +39,12 @@ function setup(chromium = true) {
     api as unknown as typeof chrome,
     { execute } as unknown as LibraryService,
   );
-  return { api, execute, trigger: (command: string) => listener(command) };
+  return {
+    api,
+    execute,
+    saved,
+    trigger: (command: string) => listener(command),
+  };
 }
 
 it('copies through an offscreen document and cleans up without opening a tab or popup', async () => {
@@ -87,3 +92,30 @@ it('uses the native clipboard in background event pages', async () => {
   expect(api.offscreen.createDocument).not.toHaveBeenCalled();
   vi.unstubAllGlobals();
 });
+
+it.each([true, false])(
+  'expands composed prompts in keyboard shortcuts (Chromium: %s)',
+  async (chromium) => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    try {
+      const { api, saved, trigger } = setup(chromium);
+      const role = component();
+      const task = component({ name: 'Task', content: '\nTask: study\n' });
+      saved.components.push(role, task);
+      saved.prompts[0]!.content = [
+        { type: 'component', id: role.id },
+        { type: 'component', id: task.id },
+      ];
+      await trigger('speed-copy-1');
+      if (chromium)
+        expect(api.runtime.sendMessage).toHaveBeenCalledWith({
+          target: 'clipboard',
+          text: 'Role: tutor\n\nTask: study',
+        });
+      else expect(writeText).toHaveBeenCalledWith('Role: tutor\n\nTask: study');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  },
+);

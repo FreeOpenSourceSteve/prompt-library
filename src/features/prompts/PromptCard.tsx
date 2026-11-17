@@ -4,6 +4,8 @@ import { usePromptCopy } from './usePromptCopy';
 
 export function PromptCard({
   prompt,
+  text,
+  resolveContent,
   disabled,
   onEdit,
   onDuplicate,
@@ -12,6 +14,8 @@ export function PromptCard({
   onMessage,
 }: {
   prompt: Prompt;
+  text: string;
+  resolveContent: (id: string) => string;
   disabled: boolean;
   onEdit: (prompt: Prompt) => void;
   onDuplicate: (prompt: Prompt) => void;
@@ -19,7 +23,7 @@ export function PromptCard({
   onTag: (tag: string) => void;
   onMessage: (message: string, error?: boolean) => void;
 }) {
-  const { copying, copy } = usePromptCopy(prompt, onMessage);
+  const { copying, copy } = usePromptCopy(prompt, resolveContent, onMessage);
 
   return (
     <article className="prompt-card" aria-label={prompt.title}>
@@ -27,10 +31,14 @@ export function PromptCard({
         <span className="card-glyph" aria-hidden="true">
           ↳
         </span>
-        <span className="eyebrow">PLAIN TEXT</span>
+        <span className="eyebrow">
+          {Array.isArray(prompt.content)
+            ? `${prompt.content.length} COMPONENTS`
+            : 'PLAIN TEXT'}
+        </span>
       </div>
       <h2>{prompt.title}</h2>
-      <p className="prompt-preview">{prompt.content}</p>
+      <p className="prompt-preview">{text}</p>
       <div className="card-tags">
         {prompt.tags.map((tag) => (
           <button

@@ -598,6 +598,101 @@ p {
 .compact-modal {
   width: min(500px, calc(100vw - 40px));
 }
+
+.component-composer {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.component-parts {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+  display: grid;
+  gap: 16px;
+}
+.component-part {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.component-part-heading,
+.component-order-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.component-part-heading {
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.component-picker {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+.component-text-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0 8px;
+}
+.component-source-text,
+.component-preview pre,
+.component-text-editor {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 240px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 0 0 16px;
+}
+.component-source-text,
+.component-text-editor {
+  background: white;
+}
+.component-text-editor {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  color: inherit;
+}
+.component-preview pre {
+  background: #eef2e9;
+  margin: 8px 0 0;
+  min-height: 80px;
+}
+.component-source-name {
+  font-weight: 600;
+}
+.component-edit-actions {
+  margin-bottom: 16px;
+}
+.component-edit-help {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.component-excerpt {
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .modal-header {
   display: flex;
   justify-content: space-between;

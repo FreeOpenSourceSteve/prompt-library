@@ -104,7 +104,7 @@ test('previews imports, downloads a complete backup, and rejects malformed files
   const result: unknown = JSON.parse(await readFile(path, 'utf8'));
   expect(result).toMatchObject({
     format: 'prompt-library',
-    version: 1,
+    version: 2,
     prompts: [prompt()],
   });
   // Re-importing a backup cannot duplicate or replace saved prompts.

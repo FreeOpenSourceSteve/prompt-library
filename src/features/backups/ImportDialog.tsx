@@ -19,6 +19,10 @@ export function ImportDialog({
   const [error, setError] = useState('');
   const ids = new Set(library.prompts.map((prompt) => prompt.id));
   const additions = backup.prompts.filter((prompt) => !ids.has(prompt.id));
+  const componentIds = new Set(library.components.map((item) => item.id));
+  const componentAdditions = backup.components.filter(
+    (item) => !componentIds.has(item.id),
+  ).length;
   const skipped = backup.prompts.length - additions.length;
 
   async function confirm() {
@@ -62,6 +66,11 @@ export function ImportDialog({
           {backup.prompts.length === 1 ? 'prompt' : 'prompts'}. Import will add{' '}
           <strong>{additions.length}</strong> to your library.
         </p>
+        <p>
+          {componentAdditions} new components will also be added. Existing
+          component IDs keep their saved text. Name conflicts or invalid
+          references reject the entire import.
+        </p>
         <p className="muted">
           {skipped} with existing IDs will be skipped. Your saved prompts will
           be kept, including any edits you made since this backup.
@@ -89,11 +98,15 @@ export function ImportDialog({
           onClick={() => {
             void confirm();
           }}
-          disabled={saving || additions.length === 0}
+          disabled={
+            saving || (additions.length === 0 && componentAdditions === 0)
+          }
         >
           {saving
             ? 'Importing…'
-            : `Import ${additions.length} ${additions.length === 1 ? 'prompt' : 'prompts'}`}
+            : additions.length === 0 && componentAdditions > 0
+              ? `Import ${componentAdditions} components`
+              : `Import ${additions.length} ${additions.length === 1 ? 'prompt' : 'prompts'}`}
         </button>
       </div>
     </Modal>

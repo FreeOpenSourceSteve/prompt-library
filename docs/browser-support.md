@@ -1,6 +1,6 @@
 # Browser and operating system support
 
-Each Manifest V3 target provides the same popup, full library, plain-text prompts, backup format, and local-only permissions. There are no operating system integrations or architecture-specific runtime binaries.
+Each Manifest V3 target provides the same popup, full library, plain-text prompts, reusable components, backup format, and local-only permissions. There are no operating system integrations or architecture-specific runtime binaries.
 
 | Browser | macOS | Windows     | Linux       | Minimum browser | Build output    |
 | ------- | ----- | ----------- | ----------- | --------------- | --------------- |
@@ -22,9 +22,11 @@ npm run package
 
 `build` creates all three targets. `package` rebuilds and creates these ZIPs under `release`:
 
-- `prompt-library-chrome-0.1.1.zip`
-- `prompt-library-firefox-0.1.1.zip`
-- `prompt-library-safari-0.1.1.zip`
+- `prompt-library-chrome-0.2.0.zip`
+- `prompt-library-firefox-0.2.0.zip`
+- `prompt-library-safari-0.2.0.zip`
+
+SHA-256 checksums for these packages are recorded in `release/SHA256SUMS-0.2.0.txt`. The [release record](releasing.md#020-packaging-record--2026-11-17) lists validation results and remaining native-browser checks.
 
 To build one target, use `npm run build:chrome`, `npm run build:firefox`, or `npm run build:safari`. Packaging uses JavaScript and portable file paths, without the system `zip` command, Bash, Xcode, or a Unix shell. `.gitattributes` keeps text line endings consistent across checkouts.
 

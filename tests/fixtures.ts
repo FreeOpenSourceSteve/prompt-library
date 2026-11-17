@@ -1,4 +1,4 @@
-import type { Backup, Library, Prompt } from '../src/domain/models';
+import type { Backup, Component, Library, Prompt } from '../src/domain/models';
 
 export function prompt(overrides: Partial<Prompt> = {}): Prompt {
   return {
@@ -14,13 +14,27 @@ export function prompt(overrides: Partial<Prompt> = {}): Prompt {
 }
 
 export function library(prompts: Prompt[] = [prompt()]): Library {
-  return { schemaVersion: 1, prompts };
+  return { schemaVersion: 2, prompts, components: [] };
 }
 export function backup(prompts: Prompt[] = [prompt()]): Backup {
   return {
     format: 'prompt-library',
-    version: 1,
+    version: 2,
+    components: [],
     exportedAt: '2026-02-01T12:00:00.000Z',
     prompts,
+  };
+}
+
+export function component(overrides: Partial<Component> = {}): Component {
+  return {
+    id: crypto.randomUUID(),
+    name: 'Tutor role',
+    tags: [],
+    content: '\nRole: tutor\n\n',
+    revision: 1,
+    createdAt: prompt().createdAt,
+    updatedAt: prompt().updatedAt,
+    ...overrides,
   };
 }
