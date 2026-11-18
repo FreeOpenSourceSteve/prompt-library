@@ -8,7 +8,7 @@ A browser extension for keeping useful AI prompts in one private, local library.
 - Build prompts from ordered reusable components, complete prompts, or a mixture of new and saved text.
 - Manage named components and update shared text across all prompts that reuse it.
 - Copy the full assembled prompt with one click.
-- Assign prompts to speed-copy buttons **1**, **2**, and **3** in the popup header, or copy using macOS shortcuts while the popup is closed.
+- Assign prompts to speed-copy buttons **1**, **2**, and **3** in the popup header, or copy using keyboard shortcuts while the popup is closed.
 - Add normalized tags and filter by tag.
 - Search titles, prompt text, and tags; sort by date or title.
 - Export the complete library to a versioned JSON backup.
@@ -39,13 +39,13 @@ Existing version-1 libraries and backups migrate automatically to version 2 with
 
 Open a prompt’s editor in the popup or full library, choose **Speed-copy → 1, 2, or 3**, then click **Save prompt**. Choose **Unassigned** and save to remove it. Assigning an occupied number replaces its previous prompt; choosing another number moves the prompt there. Empty buttons are disabled.
 
-| Button | macOS shortcut        |
-| ------ | --------------------- |
-| 1      | Command + Control + Z |
-| 2      | Command + Control + X |
-| 3      | Command + Control + C |
+| Button | macOS shortcut        | Windows / Linux shortcut |
+| ------ | --------------------- | ------------------------ |
+| 1      | Command + Control + Z | Ctrl + Shift + 1         |
+| 2      | Command + Control + X | Ctrl + Shift + 2         |
+| 3      | Command + Control + C | Ctrl + Shift + 3         |
 
-Shortcuts copy the complete saved prompt body while the browser is focused, with the popup closed. Other operating systems can assign shortcuts in their browser’s extension shortcut settings. In Chrome, check `chrome://extensions/shortcuts` if a binding conflicts with another extension. A failed shortcut shows **!** on the extension icon; hover over it for details.
+Shortcuts copy the complete saved prompt body while the browser is focused, with the popup closed. You can customize these shortcuts in your browser’s extension shortcut settings. In Chrome, check `chrome://extensions/shortcuts` if a binding conflicts with another extension. A failed shortcut shows **!** on the extension icon; hover over it for details.
 
 Assignment-only saves add or remove the `!` tag and preserve the prompt’s title, content, other tags, revision, and timestamps. The standalone `!` tag is reserved for speed-copy. It is shown read-only in the editor and cannot be entered in Tags; tags such as `important!` remain allowed. Filter by `!` to see only currently assigned prompts. The marker does not count toward the 20 ordinary-tag limit. Existing missing or stray markers are corrected automatically on load without changing other tags or metadata. Assignments persist across browser restarts and are included in JSON backups. Import restores assignments for newly imported prompts into free slots; existing slots and prompts are preserved.
 

@@ -84,7 +84,7 @@ CI is configured for builds, tests, packaging, and real Chromium/Firefox checks 
 
 ## Data and privacy
 
-Each browser profile has its own library and session draft. Export JSON in one browser and import it into another to transfer prompts and tags; there is no automatic synchronization. Every target requests `storage` and `clipboardWrite`; Chrome additionally requests `offscreen` for shortcut copying. No target includes website permissions or content scripts, and all block external connections. Speed-copy shortcuts default to Command + Control + Z / X / C on macOS; other operating systems can configure the commands in their browser’s shortcut settings. Native shortcut registration, conflicts, clipboard access with the popup closed, and worker wake-up must be verified in each browser.
+Each browser profile has its own library and session draft. Export JSON in one browser and import it into another to transfer prompts and tags; there is no automatic synchronization. Every target requests `storage` and `clipboardWrite`; Chrome additionally requests `offscreen` for shortcut copying. No target includes website permissions or content scripts, and all block external connections. Speed-copy shortcuts default to Command + Control + Z / X / C on macOS; Windows and Linux default to Ctrl + Shift + 1 / 2 / 3, and all platforms can customize the commands in their browser’s shortcut settings. Native shortcut registration, conflicts, clipboard access with the popup closed, and worker wake-up must be verified in each browser.
 
 ## Primary references
 

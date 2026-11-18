@@ -155,6 +155,13 @@ test('registers shortcuts and copies through the real offscreen page with the po
     'speed-copy-2',
     'speed-copy-3',
   ]);
+  const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
+  expect(
+    Object.values(manifest.commands ?? {}).map((command) => {
+      const key = command.suggested_key;
+      return typeof key === 'string' ? key : key?.default;
+    }),
+  ).toEqual(['Ctrl+Shift+1', 'Ctrl+Shift+2', 'Ctrl+Shift+3']);
   // Headless desktops can leave OS key bindings unassigned. Verify the actual
   // registered commands here; config tests check the suggested macOS bindings.
   // The real offscreen clipboard path below must still succeed on every OS.

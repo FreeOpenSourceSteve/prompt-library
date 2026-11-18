@@ -13,6 +13,7 @@ A minor release for the new prompt-component workflow and version-2 metadata. Ex
 - Include components, tags, references, and speed-copy assignments in versioned backup export and atomic merge import.
 - Validate circular/dangling references, nesting depth, expanded text length, storage quotas, and concurrent updates. Use indexed graph resolution, bounded text caching, and short card previews to limit memory use.
 - Add component domain, persistence, editor, and real-extension regression coverage.
+- Provide default Ctrl+Shift+1/2/3 shortcuts for Windows, Linux, and ChromeOS, retain the macOS bindings, and reject missing platform fallbacks during build verification.
 - Load extension test browsers explicitly through DevTools and validate registered commands independently of desktop shortcut assignments, while retaining the full offscreen clipboard test.
 
 ## 0.1.1

@@ -28,6 +28,27 @@ for (const target of requested.length
     pkg.version,
     'Keep package and manifest versions in sync.',
   );
+  // A suggested_key dictionary containing only mac is invalid on Windows,
+  // Linux, and ChromeOS. Verify every generated target has a fallback before
+  // packaging, rather than relying on a macOS-only install test.
+  for (const [name, command] of Object.entries(manifest.commands ?? {})) {
+    const suggestion = command.suggested_key;
+    for (const platform of ['windows', 'linux', 'chromeos', 'mac']) {
+      const shortcut =
+        typeof suggestion === 'string'
+          ? suggestion
+          : (suggestion?.[platform] ?? suggestion?.default);
+      assert.ok(
+        typeof shortcut === 'string' && shortcut.length > 0,
+        `Command ${name} needs a ${platform} shortcut or nonempty default fallback.`,
+      );
+      if (platform !== 'mac')
+        assert.ok(
+          !/Command|MacCtrl|Option/u.test(shortcut),
+          `Command ${name} has macOS-only modifiers on ${platform}.`,
+        );
+    }
+  }
   assert.deepEqual(
     manifest.permissions,
     target === 'chrome'

@@ -22,6 +22,23 @@ describe('browser targets', () => {
       ]);
     },
   );
+  it.each(browserTargets)(
+    'provides an installable fallback shortcut for every desktop platform in %s',
+    (target) => {
+      const commands = createManifest(target).commands;
+      expect(
+        Object.values(commands).map((command) => command.suggested_key.default),
+      ).toEqual(['Ctrl+Shift+1', 'Ctrl+Shift+2', 'Ctrl+Shift+3']);
+      for (const command of Object.values(commands)) {
+        // Chromium rejects a platform-only dictionary without a default. The
+        // fallback must also avoid macOS-only modifier names.
+        expect(command.suggested_key.default).toMatch(/^Ctrl\+Shift\+[123]$/u);
+        expect(command.suggested_key.default).not.toMatch(
+          /Command|MacCtrl|Option/u,
+        );
+      }
+    },
+  );
   it('rejects unknown output targets instead of creating arbitrary paths', () => {
     expect(parseTarget('firefox')).toBe('firefox');
     expect(() => parseTarget('../elsewhere')).toThrow('Unknown browser');

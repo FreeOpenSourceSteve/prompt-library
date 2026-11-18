@@ -6,15 +6,24 @@
   "permissions": ["storage", "clipboardWrite"],
   "commands": {
     "speed-copy-1": {
-      "suggested_key": { "mac": "Command+MacCtrl+Z" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+1",
+        "mac": "Command+MacCtrl+Z"
+      },
       "description": "Copy speed-copy prompt 1"
     },
     "speed-copy-2": {
-      "suggested_key": { "mac": "Command+MacCtrl+X" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+2",
+        "mac": "Command+MacCtrl+X"
+      },
       "description": "Copy speed-copy prompt 2"
     },
     "speed-copy-3": {
-      "suggested_key": { "mac": "Command+MacCtrl+C" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+3",
+        "mac": "Command+MacCtrl+C"
+      },
       "description": "Copy speed-copy prompt 3"
     }
   },
