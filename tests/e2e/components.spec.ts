@@ -1,3 +1,4 @@
+import { nativeClipboardText } from '../clipboard';
 import { readFile } from 'node:fs/promises';
 import { test, expect } from './fixtures';
 import { backup, component, prompt } from '../fixtures';
@@ -45,7 +46,7 @@ test('creates, reuses, orders, copies, and updates components through both exten
   await expect(page.getByRole('status')).toContainText('Copied');
   await context.grantPermissions(['clipboard-read']);
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
-    'Role: tutor\n\nTask: create <literal> exam',
+    nativeClipboardText('Role: tutor\n\nTask: create <literal> exam'),
   );
 
   await page.getByRole('button', { name: 'New prompt', exact: true }).click();
@@ -108,13 +109,13 @@ test('creates, reuses, orders, copies, and updates components through both exten
   await mixed.getByRole('button', { name: 'Copy', exact: true }).click();
   await expect(popup.getByRole('status')).toContainText('Copied');
   expect(await popup.evaluate(() => navigator.clipboard.readText())).toBe(
-    expected,
+    nativeClipboardText(expected),
   );
   await popup
     .getByRole('button', { name: 'Speed-copy 1: Mixed exam', exact: true })
     .click();
   expect(await popup.evaluate(() => navigator.clipboard.readText())).toBe(
-    expected,
+    nativeClipboardText(expected),
   );
 
   // An all-existing composition can be created in the popup too.

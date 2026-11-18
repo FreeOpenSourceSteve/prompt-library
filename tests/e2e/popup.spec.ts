@@ -1,3 +1,4 @@
+import { nativeClipboardText } from '../clipboard';
 import type { Page } from '@playwright/test';
 import { test, expect } from './fixtures';
 import { backup } from '../fixtures';
@@ -39,7 +40,9 @@ test('handles everyday prompt workflows in the popup and opens the full library'
   await card.getByRole('button', { name: 'Copy', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Copied');
   await context.grantPermissions(['clipboard-read']);
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(raw);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    nativeClipboardText(raw),
+  );
   await page
     .getByRole('searchbox', { name: 'Search prompts' })
     .fill('not present');

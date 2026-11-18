@@ -1,3 +1,4 @@
+import { nativeClipboardText } from '../clipboard';
 import { test, expect } from './fixtures';
 import { backup, prompt } from '../fixtures';
 import { STORAGE_KEY } from '../../src/domain/models';
@@ -70,7 +71,7 @@ test('assigns from both editors, copies the exact text, and preserves metadata o
   await expect(popup.getByRole('status')).toContainText('Copied');
   await context.grantPermissions(['clipboard-read']);
   expect(await popup.evaluate(() => navigator.clipboard.readText())).toBe(
-    first.content,
+    nativeClipboardText(first.content as string),
   );
   await expect(
     popup.getByRole('button', {
@@ -188,5 +189,7 @@ test('registers shortcuts and copies through the real offscreen page with the po
   const reader = await context.newPage();
   await reader.goto(`chrome-extension://${extensionId}/index.html`);
   await context.grantPermissions(['clipboard-read']);
-  expect(await reader.evaluate(() => navigator.clipboard.readText())).toBe(raw);
+  expect(await reader.evaluate(() => navigator.clipboard.readText())).toBe(
+    nativeClipboardText(raw),
+  );
 });
