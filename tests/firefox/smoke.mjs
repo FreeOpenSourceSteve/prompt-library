@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { Builder, By, until } from 'selenium-webdriver';
 import firefoxDriver from 'selenium-webdriver/firefox.js';
-import { nativeClipboardText } from '../clipboard.ts';
 import { FIREFOX_ID } from '../../config/targets.ts';
 
 // Selenium temporarily installs the real Firefox build into an isolated profile.
@@ -96,7 +95,7 @@ try {
   const copied = await driver.executeAsyncScript(
     'navigator.clipboard.readText().then(arguments[arguments.length - 1]);',
   );
-  assert.equal(copied, nativeClipboardText(raw));
+  assert.equal(copied, raw);
   await fill('input[type="search"]', 'unmatched query');
   await driver.wait(
     async () =>
