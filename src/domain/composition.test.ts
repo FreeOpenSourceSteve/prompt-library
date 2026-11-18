@@ -234,14 +234,13 @@ describe('versioned component storage', () => {
       components: [part],
     };
     expect(parseLibrary(value)).toEqual(value);
-    expect(validateBackup({ ...createBackup(value), unknown: true })).toEqual(
-      createBackup(value),
-    );
+    const exported = createBackup(value);
+    expect(validateBackup({ ...exported, unknown: true })).toEqual(exported);
     expect(() => parseLibrary({ ...value, schemaVersion: 1 })).toThrow(
       'plain text',
     );
-    expect(() =>
-      validateBackup({ ...createBackup(value), version: 1 }),
-    ).toThrow('plain text');
+    expect(() => validateBackup({ ...exported, version: 1 })).toThrow(
+      'plain text',
+    );
   });
 });
