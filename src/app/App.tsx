@@ -194,7 +194,10 @@ export function App() {
               {tag ? `# ${tag}` : 'Your prompt library'}
               <span className="heading-dot">.</span>
             </h1>
-            <p>Work smarter, kill 2 early birds before they hatch, wake up when you want & catch the worm.</p>
+            <p>
+              Work smarter, kill 2 early birds before they hatch, wake up when
+              you want & catch the worm.
+            </p>
           </div>
           <div className="header-actions">
             <button
@@ -311,9 +314,7 @@ export function App() {
               Clear filters
             </button>
           )}
-          <span className="plain-text-note">
-            Write Once. Use Forever.
-          </span>
+          <span className="plain-text-note">Write Once. Use Forever.</span>
         </div>
         {!library && !loadError ? (
           <div className="empty-state" role="status">
@@ -381,7 +382,9 @@ export function App() {
           </div>
         )}
         <footer className="page-footer">
-          <span>Made for people who dislike wasting time and spending money.</span>
+          <span>
+            Made for people who dislike wasting time and spending money.
+          </span>
           <span>
             <Icon name="lock" />
             Offline &amp; private
