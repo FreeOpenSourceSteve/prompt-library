@@ -130,7 +130,7 @@ export function App() {
             [p]
           </span>
           <div>
-            Prompt Library<span>A little space for big ideas.</span>
+            Prompt Library<span>A tool that works.</span>
           </div>
         </div>
         <div className="sidebar-section">
@@ -189,12 +189,12 @@ export function App() {
       <main id="library-main" className="main-content" tabIndex={-1}>
         <header className="page-header">
           <div>
-            <span className="eyebrow">COLLECT. REFINE. REUSE.</span>
+            <span className="eyebrow">CREATE. REFINE. REUSE.</span>
             <h1>
               {tag ? `# ${tag}` : 'Your prompt library'}
               <span className="heading-dot">.</span>
             </h1>
-            <p>Your best thinking, ready when you need it.</p>
+            <p>Work smarter, kill 2 early birds before they hatch, wake up when you want & catch the worm.</p>
           </div>
           <div className="header-actions">
             <button
@@ -312,7 +312,7 @@ export function App() {
             </button>
           )}
           <span className="plain-text-note">
-            Plain text. Endless possibilities.
+            Write Once. Use Forever.
           </span>
         </div>
         {!library && !loadError ? (
@@ -331,7 +331,7 @@ export function App() {
             </h2>
             <p>
               {prompts.length === 0
-                ? 'Save a prompt you love. Tag it, make it your own, and use it again.'
+                ? 'Save it. Tag it. Use it. Repeat.'
                 : 'Try another search or clear your tag filter.'}
             </p>
             {prompts.length === 0 ? (
@@ -381,7 +381,7 @@ export function App() {
           </div>
         )}
         <footer className="page-footer">
-          <span>Made for the prompts worth keeping.</span>
+          <span>Made for people who dislike wasting time and spending money.</span>
           <span>
             <Icon name="lock" />
             Offline &amp; private
