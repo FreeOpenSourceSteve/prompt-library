@@ -119,7 +119,7 @@ export function Popup() {
             [p]
           </span>
           <div>
-            Prompt Library<span>Your everyday prompts, a click away.</span>
+            Prompt Library<span>Kill the birds, catch the worms.</span>
           </div>
         </div>
         <div className="popup-header-actions tooltip-group">
