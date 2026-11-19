@@ -7,7 +7,12 @@ import type {
   SortOrder,
   SpeedCopySlot,
 } from '../domain/models';
-import { getTags, selectPrompts } from '../domain/prompts';
+import {
+  getTags,
+  selectPrompts,
+  libraryContent,
+  libraryPreview,
+} from '../domain/prompts';
 import { assignedSlot } from '../domain/speed-copy';
 import { errorMessage } from '../domain/validation';
 import { isExtensionContext, sendCommand } from '../platform/client';
@@ -15,6 +20,7 @@ import { downloadBackup, readBackup } from '../platform/files';
 import { ImportDialog } from '../features/backups/ImportDialog';
 import { DeleteDialog } from '../features/prompts/DeleteDialog';
 import { PromptCard } from '../features/prompts/PromptCard';
+import { ComponentManager } from '../features/prompts/ComponentManager';
 import { PromptEditor } from '../features/prompts/PromptEditor';
 import { Icon } from './components/Icon';
 import { useLibrary } from './hooks/useLibrary';
@@ -31,6 +37,7 @@ export function App() {
   } | null>(null);
   const [deleting, setDeleting] = useState<Prompt | null>(null);
   const [backup, setBackup] = useState<Backup | null>(null);
+  const [managingComponents, setManagingComponents] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(
     null,
@@ -48,7 +55,7 @@ export function App() {
       await reload();
       message(
         command.type === 'library:import'
-          ? `Imported ${result.imported ?? 0} prompts. Skipped ${result.skipped ?? 0} existing prompts.`
+          ? `Imported ${result.imported ?? 0} prompts and ${result.importedComponents ?? 0} components. Skipped ${result.skipped ?? 0} existing prompts and ${result.skippedComponents ?? 0} existing components.`
           : success,
       );
     } finally {
@@ -106,8 +113,10 @@ export function App() {
     );
 
   const prompts = library?.prompts ?? [];
+  const content = libraryContent(library);
+  const preview = libraryPreview(library);
   const tags = getTags(prompts);
-  const visible = selectPrompts(prompts, query, tag, sort);
+  const visible = selectPrompts(prompts, query, tag, sort, content);
   const ready = library !== null && !loadError;
 
   return (
@@ -188,6 +197,13 @@ export function App() {
             <p>Your best thinking, ready when you need it.</p>
           </div>
           <div className="header-actions">
+            <button
+              className="button"
+              disabled={!ready || busy}
+              onClick={() => setManagingComponents(true)}
+            >
+              Manage components ({library?.components.length ?? 0})
+            </button>
             <button
               className="button"
               onClick={() => fileInput.current?.click()}
@@ -345,6 +361,8 @@ export function App() {
               <PromptCard
                 key={prompt.id}
                 prompt={prompt}
+                text={preview(prompt.id)}
+                resolveContent={content}
                 disabled={busy || !ready}
                 onEdit={(prompt) =>
                   setEditor({
@@ -370,13 +388,20 @@ export function App() {
           </span>
         </footer>
       </main>
+      {managingComponents && library && (
+        <ComponentManager
+          library={library}
+          onMutate={mutate}
+          onClose={() => setManagingComponents(false)}
+        />
+      )}
       {editor && (
         <PromptEditor
           prompt={editor.prompt}
           library={library}
           initialSpeedCopy={editor.speedCopy}
           onClose={() => setEditor(null)}
-          onSave={(input, speedCopy) =>
+          onSave={(input, speedCopy, newComponents, componentUpdates) =>
             mutate(
               editor.prompt
                 ? {
@@ -385,11 +410,19 @@ export function App() {
                     revision: editor.prompt.revision,
                     expectedSpeedCopy: editor.speedCopy,
                     input,
+                    ...(newComponents === undefined ? {} : { newComponents }),
+                    ...(componentUpdates === undefined
+                      ? {}
+                      : { componentUpdates }),
                     ...(speedCopy === undefined ? {} : { speedCopy }),
                   }
                 : {
                     type: 'prompt:create',
                     input,
+                    ...(newComponents === undefined ? {} : { newComponents }),
+                    ...(componentUpdates === undefined
+                      ? {}
+                      : { componentUpdates }),
                     ...(speedCopy === undefined ? {} : { speedCopy }),
                   },
               editor.prompt ? 'Prompt updated.' : 'Prompt saved.',

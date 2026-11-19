@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import type {
   Library,
+  NewComponent,
+  ComponentUpdate,
   Prompt,
   PromptInput,
   SpeedCopySlot,
@@ -15,6 +17,13 @@ import { errorMessage, validateInput } from '../../domain/validation';
 import { Icon } from '../../app/components/Icon';
 import { Modal } from '../../app/components/Modal';
 import type { EditorFields } from './editor-draft';
+import {
+  createEditorDraft,
+  componentInput,
+  componentUpdates,
+  draftContent,
+} from './editor-draft';
+import { ComponentComposer } from './ComponentComposer';
 import { ordinaryTags } from '../../domain/speed-copy';
 
 export function PromptEditor({
@@ -31,6 +40,8 @@ export function PromptEditor({
   onSave: (
     input: PromptInput,
     speedCopy?: SpeedCopySlot | null,
+    newComponents?: NewComponent[],
+    updates?: ComponentUpdate[],
   ) => Promise<void>;
   onClose: () => void;
   layout?: 'modal' | 'panel';
@@ -41,15 +52,14 @@ export function PromptEditor({
 }) {
   const [originalSpeedCopy] = useState(initialSpeedCopy);
   const [fields, setFields] = useState<EditorFields>(
-    () =>
-      initialFields ?? {
-        title: prompt?.title ?? '',
-        content: prompt?.content ?? '',
-        tags: ordinaryTags(prompt?.tags ?? []).join(', '),
-        speedCopy: originalSpeedCopy,
-      },
+    () => initialFields ?? createEditorDraft(prompt, originalSpeedCopy).fields,
   );
-  const { title, content, tags } = fields;
+  const { title, content, tags, parts } = fields;
+  const componentEdits = fields.componentEdits ?? [];
+  function replaceFields(next: EditorFields) {
+    setFields(next);
+    onDraftChange?.(next);
+  }
   const speedCopy =
     fields.speedCopy === undefined ? originalSpeedCopy : fields.speedCopy;
   function change<K extends keyof EditorFields>(
@@ -57,15 +67,19 @@ export function PromptEditor({
     value: EditorFields[K],
   ) {
     const next = { ...fields, [field]: value };
-    setFields(next);
-    onDraftChange?.(next);
+    replaceFields(next);
   }
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const dirty =
+    componentEdits.length > 0 ||
     title !== (prompt?.title ?? '') ||
-    content !== (prompt?.content ?? '') ||
+    content !== (typeof prompt?.content === 'string' ? prompt.content : '') ||
+    JSON.stringify(parts) !==
+      JSON.stringify(
+        Array.isArray(prompt?.content) ? prompt.content : undefined,
+      ) ||
     tags !== ordinaryTags(prompt?.tags ?? []).join(', ') ||
     speedCopy !== originalSpeedCopy;
 
@@ -94,8 +108,27 @@ export function PromptEditor({
     setError('');
     setSaving(true);
     try {
-      const input = validateInput({ title, content, tags: tags.split(',') });
-      if (speedCopy !== originalSpeedCopy) await onSave(input, speedCopy);
+      const composition = parts ? componentInput(parts) : null;
+      const input = validateInput({
+        title,
+        content: composition?.content ?? content,
+        tags: tags.split(','),
+      });
+      const updates = componentUpdates(componentEdits);
+      if (updates.length)
+        await onSave(
+          input,
+          speedCopy === originalSpeedCopy ? undefined : speedCopy,
+          composition?.newComponents ?? [],
+          updates,
+        );
+      else if (composition?.newComponents.length)
+        await onSave(
+          input,
+          speedCopy === originalSpeedCopy ? undefined : speedCopy,
+          composition.newComponents,
+        );
+      else if (speedCopy !== originalSpeedCopy) await onSave(input, speedCopy);
       else await onSave(input);
       onClose();
     } catch (error) {
@@ -142,27 +175,94 @@ export function PromptEditor({
           />
         </label>
         <label className="field">
-          Prompt
-          <textarea
-            name="content"
-            required
-            maxLength={MAX_CONTENT_LENGTH}
-            rows={layout === 'panel' ? 7 : 12}
-            spellCheck={false}
-            value={content}
-            onChange={(event) => change('content', event.target.value)}
-            placeholder="Write or paste your prompt here…"
+          Content type
+          <select
+            value={parts ? 'components' : 'text'}
             disabled={saving}
-            aria-describedby="content-help"
-          />
+            onChange={(event) => {
+              if (event.target.value === 'components') {
+                replaceFields({
+                  ...fields,
+                  parts: content
+                    ? [
+                        {
+                          type: 'new',
+                          id: crypto.randomUUID(),
+                          name: '',
+                          content,
+                          tags: '',
+                        },
+                      ]
+                    : [],
+                });
+              } else {
+                try {
+                  const next = {
+                    ...fields,
+                    content: draftContent(parts ?? [], library, componentEdits),
+                  };
+                  delete next.parts;
+                  delete next.componentEdits;
+                  replaceFields(next);
+                  setError('');
+                } catch (error) {
+                  setError(errorMessage(error));
+                }
+              }
+            }}
+          >
+            <option value="text">Plain text</option>
+            <option value="components">Multiple components</option>
+          </select>
         </label>
-        <p id="content-help" className="field-help">
-          Plain text, exactly as you write it. Formatting is never rendered.{' '}
-          <span>
-            {content.length.toLocaleString()} /{' '}
-            {MAX_CONTENT_LENGTH.toLocaleString()}
-          </span>
-        </p>
+        {parts ? (
+          <ComponentComposer
+            parts={parts}
+            library={library}
+            promptId={prompt?.id}
+            disabled={saving}
+            edits={componentEdits}
+            onEditChange={(componentEdits) =>
+              change('componentEdits', componentEdits)
+            }
+            onChange={(parts) =>
+              replaceFields({
+                ...fields,
+                parts,
+                componentEdits: componentEdits.filter((edit) =>
+                  parts.some(
+                    (part) => part.type === 'component' && part.id === edit.id,
+                  ),
+                ),
+              })
+            }
+          />
+        ) : (
+          <>
+            <label className="field">
+              Prompt
+              <textarea
+                name="content"
+                required
+                maxLength={MAX_CONTENT_LENGTH}
+                rows={layout === 'panel' ? 7 : 12}
+                spellCheck={false}
+                value={content}
+                onChange={(event) => change('content', event.target.value)}
+                placeholder="Write or paste your prompt here…"
+                disabled={saving}
+                aria-describedby="content-help"
+              />
+            </label>
+            <p id="content-help" className="field-help">
+              Plain text, exactly as you write it. Formatting is never rendered.{' '}
+              <span>
+                {content.length.toLocaleString()} /{' '}
+                {MAX_CONTENT_LENGTH.toLocaleString()}
+              </span>
+            </p>
+          </>
+        )}
         <label className="field">
           Tags <span className="optional">optional</span>
           <input

@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import packageMetadata from '../../package.json' with { type: 'json' };
 import { LibraryService } from '../../src/background/library-service';
 import type { Library } from '../../src/domain/models';
 
@@ -18,7 +19,7 @@ test('renders the popup and editor in WebKit and preserves literal prompt text',
   await page.exposeFunction('testLibraryCommand', (command: unknown) =>
     service.execute(command),
   );
-  await page.addInitScript(() => {
+  await page.addInitScript((version: string) => {
     type TestWindow = {
       testLibraryCommand: (command: unknown) => Promise<unknown>;
       browser: unknown;
@@ -29,7 +30,7 @@ test('renders the popup and editor in WebKit and preserves literal prompt text',
       runtime: {
         id: 'webkit-rendering-test',
         getURL: (path: string) => new URL(path, location.origin).href,
-        getManifest: () => ({ version: '0.1.0' }),
+        getManifest: () => ({ version }),
         sendMessage: (command: unknown) => target.testLibraryCommand(command),
       },
       storage: {
@@ -46,7 +47,7 @@ test('renders the popup and editor in WebKit and preserves literal prompt text',
         onChanged: { addListener: () => {}, removeListener: () => {} },
       },
     };
-  });
+  }, packageMetadata.version);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/popup.html');

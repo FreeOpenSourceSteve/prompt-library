@@ -1,6 +1,6 @@
 # Browser and operating system support
 
-Each Manifest V3 target provides the same popup, full library, plain-text prompts, backup format, and local-only permissions. There are no operating system integrations or architecture-specific runtime binaries.
+Each Manifest V3 target provides the same popup, full library, plain-text prompts, reusable components, backup format, and local-only permissions. There are no operating system integrations or architecture-specific runtime binaries.
 
 | Browser | macOS | Windows     | Linux       | Minimum browser | Build output    |
 | ------- | ----- | ----------- | ----------- | --------------- | --------------- |
@@ -22,9 +22,11 @@ npm run package
 
 `build` creates all three targets. `package` rebuilds and creates these ZIPs under `release`:
 
-- `prompt-library-chrome-0.1.1.zip`
-- `prompt-library-firefox-0.1.1.zip`
-- `prompt-library-safari-0.1.1.zip`
+- `prompt-library-chrome-0.2.0.zip`
+- `prompt-library-firefox-0.2.0.zip`
+- `prompt-library-safari-0.2.0.zip`
+
+SHA-256 checksums for these packages are recorded in `release/SHA256SUMS-0.2.0.txt`. The [release record](releasing.md#020-packaging-record--2026-11-17) lists validation results and remaining native-browser checks.
 
 To build one target, use `npm run build:chrome`, `npm run build:firefox`, or `npm run build:safari`. Packaging uses JavaScript and portable file paths, without the system `zip` command, Bash, Xcode, or a Unix shell. `.gitattributes` keeps text line endings consistent across checkouts.
 
@@ -82,7 +84,7 @@ CI is configured for builds, tests, packaging, and real Chromium/Firefox checks 
 
 ## Data and privacy
 
-Each browser profile has its own library and session draft. Export JSON in one browser and import it into another to transfer prompts and tags; there is no automatic synchronization. Every target requests `storage` and `clipboardWrite`; Chrome additionally requests `offscreen` for shortcut copying. No target includes website permissions or content scripts, and all block external connections. Speed-copy shortcuts default to Command + Control + Z / X / C on macOS; other operating systems can configure the commands in their browser’s shortcut settings. Native shortcut registration, conflicts, clipboard access with the popup closed, and worker wake-up must be verified in each browser.
+Each browser profile has its own library and session draft. Export JSON in one browser and import it into another to transfer prompts and tags; there is no automatic synchronization. Every target requests `storage` and `clipboardWrite`; Chrome additionally requests `offscreen` for shortcut copying. No target includes website permissions or content scripts, and all block external connections. Speed-copy shortcuts default to Command + Control + Z / X / C on macOS; Windows and Linux default to Ctrl + Shift + 1 / 2 / 3, and all platforms can customize the commands in their browser’s shortcut settings. Native shortcut registration, conflicts, clipboard access with the popup closed, and worker wake-up must be verified in each browser.
 
 ## Primary references
 

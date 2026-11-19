@@ -5,8 +5,10 @@ A browser extension for keeping useful AI prompts in one private, local library.
 ## What works
 
 - Create, edit, duplicate, and delete prompts.
-- Copy the full prompt with one click.
-- Assign prompts to speed-copy buttons **1**, **2**, and **3** in the popup header, or copy using macOS shortcuts while the popup is closed.
+- Build prompts from ordered reusable components, complete prompts, or a mixture of new and saved text.
+- Manage named components and update shared text across all prompts that reuse it.
+- Copy the full assembled prompt with one click.
+- Assign prompts to speed-copy buttons **1**, **2**, and **3** in the popup header, or copy using keyboard shortcuts while the popup is closed.
 - Add normalized tags and filter by tag.
 - Search titles, prompt text, and tags; sort by date or title.
 - Export the complete library to a versioned JSON backup.
@@ -17,19 +19,33 @@ A browser extension for keeping useful AI prompts in one private, local library.
 
 The popup handles everyday prompt use. The full library provides the larger workspace, backup import/export, duplication, and deletion. Both surfaces share the same saved prompts and conflict checks. No account is required.
 
-Prompts are **plain text**. Markdown, HTML, whitespace, and line breaks remain literal text when stored, edited, copied, and exported. Card previews are shortened visually; Edit shows the complete text. The JSON backup preserves tags and metadata alongside the plain-text content; it is not a Markdown document or a `.txt` export.
+Prompts and component bodies are **plain text**. Markdown and HTML remain literal text. Stored bodies and standalone prompt copies preserve whitespace verbatim; composed copies normalize boundary line breaks to exactly one blank line between text values. Card previews show up to 1,000 characters; Edit and expanded popup details show the complete text. The JSON backup preserves tags and metadata alongside the plain-text content; it is not a Markdown document or a `.txt` export.
+
+## Prompt components
+
+In **New prompt**, choose **Content type → Multiple components**. Use **Add new component** to give a text block a reusable name, or search for a saved component or complete prompt, select it, and click **Add selected item**. Mix both kinds, move items up or down, and remove references as needed. The assembled preview shows the text that Copy and speed-copy will use. Save stores the prompt and any new components together.
+
+Each part shows its source text by default; **Hide text** and **Show text** control visibility independently. Use **Edit component** on a saved component to change its name, text, or tags within the create/edit prompt form. **Done editing** returns to the text view; **Undo component edits** restores the saved values. Changes stay in your draft until **Save prompt**, when the prompt and all component edits save together. Cancel discards them. The assembled preview uses the same label style as other fields and a shaded monospace text area.
+
+Components use live references: saved edits made in the composer or **Manage components** update all prompts that reuse that component, including nested prompts. Each component name must be unique and different from every prompt title (ignoring case and surrounding whitespace). Renaming preserves references. A referenced prompt or component cannot be deleted until its references are removed. Circular references are rejected, and errors preserve your draft.
+
+Apply component tags when creating or editing a component. Search the component picker by name or tag, or filter by tag in **Manage components**. Component tags are independent of prompt tags, use the same 20-tag/40-character limits, and are included in backups. Older untagged components remain supported.
+
+Switch back to **Plain text** to turn the current assembly, including staged edits, into an independent text body without changing the shared components. Removing a reference or deleting a parent prompt keeps saved components available for reuse; unused components can be deleted in **Manage components**. The popup retains unfinished compositions during the current browser session.
+
+Existing version-1 libraries and backups migrate automatically to version 2 without changing their prompt text or metadata. Exports include the components and prompt references; older extension versions cannot read version-2 backups. See the [development plan](docs/prompt-components-plan.md) and [metadata format](docs/backup-format.md).
 
 ## Speed-copy
 
 Open a prompt’s editor in the popup or full library, choose **Speed-copy → 1, 2, or 3**, then click **Save prompt**. Choose **Unassigned** and save to remove it. Assigning an occupied number replaces its previous prompt; choosing another number moves the prompt there. Empty buttons are disabled.
 
-| Button | macOS shortcut        |
-| ------ | --------------------- |
-| 1      | Command + Control + Z |
-| 2      | Command + Control + X |
-| 3      | Command + Control + C |
+| Button | macOS shortcut        | Windows / Linux shortcut |
+| ------ | --------------------- | ------------------------ |
+| 1      | Command + Control + Z | Ctrl + Shift + 1         |
+| 2      | Command + Control + X | Ctrl + Shift + 2         |
+| 3      | Command + Control + C | Ctrl + Shift + 3         |
 
-Shortcuts copy the complete saved prompt body while the browser is focused, with the popup closed. Other operating systems can assign shortcuts in their browser’s extension shortcut settings. In Chrome, check `chrome://extensions/shortcuts` if a binding conflicts with another extension. A failed shortcut shows **!** on the extension icon; hover over it for details.
+Shortcuts copy the complete saved prompt body while the browser is focused, with the popup closed. You can customize these shortcuts in your browser’s extension shortcut settings. In Chrome, check `chrome://extensions/shortcuts` if a binding conflicts with another extension. A failed shortcut shows **!** on the extension icon; hover over it for details.
 
 Assignment-only saves add or remove the `!` tag and preserve the prompt’s title, content, other tags, revision, and timestamps. The standalone `!` tag is reserved for speed-copy. It is shown read-only in the editor and cannot be entered in Tags; tags such as `important!` remain allowed. Filter by `!` to see only currently assigned prompts. The marker does not count toward the 20 ordinary-tag limit. Existing missing or stray markers are corrected automatically on load without changing other tags or metadata. Assignments persist across browser restarts and are included in JSON backups. Import restores assignments for newly imported prompts into free slots; existing slots and prompts are preserved.
 
@@ -103,11 +119,11 @@ The library lives in WebExtensions local storage, within the current browser pro
 
 An unfinished popup draft is held in WebExtensions session storage and restored when the popup reopens. It retains the original prompt revision to detect edits made from the full page. Saving or explicitly discarding the draft clears it. Session drafts are temporary and are cleared when the browser restarts or the extension reloads; click **Save prompt** for permanent storage.
 
-Limits: 2,000 prompts; 160 characters per title; 100,000 per prompt body; 20 tags per prompt, 40 characters per tag; approximately 8 MB total serialized data. Import files must be at most 8 MiB. Quota checks leave room for a backup envelope.
+Limits: 2,000 prompts; 4,000 components; 160 characters per title or component name; 100 references per composed prompt; 32 nesting levels; 100,000 characters per text body or assembled prompt; 20 tags per prompt, 40 characters per tag; approximately 8 MB total serialized data. Import files must be at most 8 MiB. Quota checks leave room for a backup envelope.
 
 **Export backups regularly.** Uninstalling the extension or deleting the browser profile removes its local data. Storage and exported files are not application-encrypted; treat them as private documents. See the [privacy note](docs/privacy.md).
 
-Import adds new IDs, skips existing IDs, and never replaces saved prompts, even when an imported record is newer. Import is all-or-nothing after validation and quota checks. It is suitable for restoring into an empty library or adding missing prompts, rather than rolling existing records back to an older backup.
+Import adds new prompt and component IDs, skips existing IDs, and never replaces saved records, even when an imported record is newer. Name conflicts or invalid merged compositions reject the entire import. Import is all-or-nothing after validation and quota checks. It is suitable for restoring into an empty library or adding missing prompts, rather than rolling existing records back to an older backup.
 
 ## Before distribution
 

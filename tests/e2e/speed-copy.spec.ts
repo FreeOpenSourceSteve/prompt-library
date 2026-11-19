@@ -1,3 +1,4 @@
+import { nativeClipboardText } from '../clipboard';
 import { test, expect } from './fixtures';
 import { backup, prompt } from '../fixtures';
 import { STORAGE_KEY } from '../../src/domain/models';
@@ -70,7 +71,7 @@ test('assigns from both editors, copies the exact text, and preserves metadata o
   await expect(popup.getByRole('status')).toContainText('Copied');
   await context.grantPermissions(['clipboard-read']);
   expect(await popup.evaluate(() => navigator.clipboard.readText())).toBe(
-    first.content,
+    nativeClipboardText(first.content as string),
   );
   await expect(
     popup.getByRole('button', {
@@ -150,9 +151,21 @@ test('registers shortcuts and copies through the real offscreen page with the po
   const registered = commands.filter((command) =>
     command.name?.startsWith('speed-copy-'),
   );
-  expect(registered).toHaveLength(3);
-  if (process.platform === 'darwin')
-    expect(registered.every((command) => command.shortcut)).toBe(true);
+  expect(registered.map((command) => command.name).sort()).toEqual([
+    'speed-copy-1',
+    'speed-copy-2',
+    'speed-copy-3',
+  ]);
+  const manifest = await worker.evaluate(() => chrome.runtime.getManifest());
+  expect(
+    Object.values(manifest.commands ?? {}).map((command) => {
+      const key = command.suggested_key;
+      return typeof key === 'string' ? key : key?.default;
+    }),
+  ).toEqual(['Ctrl+Shift+1', 'Ctrl+Shift+2', 'Ctrl+Shift+3']);
+  // Headless desktops can leave OS key bindings unassigned. Verify the actual
+  // registered commands here; config tests check the suggested macOS bindings.
+  // The real offscreen clipboard path below must still succeed on every OS.
   await page.close();
   const raw = '  # Speed copy\n<script>literal</script>\n  ';
   // Exercise the packaged offscreen document, real clipboard permission, and
@@ -176,5 +189,7 @@ test('registers shortcuts and copies through the real offscreen page with the po
   const reader = await context.newPage();
   await reader.goto(`chrome-extension://${extensionId}/index.html`);
   await context.grantPermissions(['clipboard-read']);
-  expect(await reader.evaluate(() => navigator.clipboard.readText())).toBe(raw);
+  expect(await reader.evaluate(() => navigator.clipboard.readText())).toBe(
+    nativeClipboardText(raw),
+  );
 });

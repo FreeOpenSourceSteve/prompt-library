@@ -125,7 +125,7 @@ describe('stored libraries and backups', () => {
     expect(parseLibrary(undefined)).toEqual(library([]));
     expect(parseLibrary(library())).toEqual(library());
     expect(() => parseLibrary(null)).toThrow();
-    expect(() => parseLibrary({ schemaVersion: 2, prompts: [] })).toThrow(
+    expect(() => parseLibrary({ schemaVersion: 99, prompts: [] })).toThrow(
       'unsupported',
     );
   });

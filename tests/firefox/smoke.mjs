@@ -138,12 +138,29 @@ try {
   await driver.switchTo().window(newHandle);
   await visible('article[aria-label="Edited in Firefox"]');
   await (await button('Export all')).click();
-  const file = await driver.wait(
-    async () =>
-      (await readdir(downloads)).find((name) => name.endsWith('.json')),
+  // Firefox can create the final filename before it finishes writing the
+  // download. Wait for complete JSON, not just the placeholder's existence.
+  const downloaded = await driver.wait(
+    async () => {
+      const file = (await readdir(downloads)).find((name) =>
+        name.endsWith('.json'),
+      );
+      if (!file) return false;
+      try {
+        return {
+          file,
+          data: JSON.parse(await readFile(join(downloads, file), 'utf8')),
+        };
+      } catch (error) {
+        if (error instanceof SyntaxError || error.code === 'ENOENT')
+          return false;
+        throw error;
+      }
+    },
     15_000,
+    'Firefox backup download did not finish with valid JSON.',
   );
-  const exported = JSON.parse(await readFile(join(downloads, file), 'utf8'));
+  const { file, data: exported } = downloaded;
   assert.equal(exported.prompts[0].content, raw);
   assert.equal(exported.prompts[0].title, 'Edited in Firefox');
   await (await visible('input[type="file"]')).sendKeys(join(downloads, file));

@@ -1,8 +1,19 @@
 import { useState } from 'react';
-import type { Prompt, PromptInput, SpeedCopySlot } from '../domain/models';
+import type {
+  NewComponent,
+  ComponentUpdate,
+  Prompt,
+  PromptInput,
+  SpeedCopySlot,
+} from '../domain/models';
 import { assignedSlot } from '../domain/speed-copy';
 import { SpeedCopyButtons } from '../features/prompts/SpeedCopyButtons';
-import { getTags, selectPrompts } from '../domain/prompts';
+import {
+  getTags,
+  selectPrompts,
+  libraryContent,
+  libraryPreview,
+} from '../domain/prompts';
 import { errorMessage } from '../domain/validation';
 import { isExtensionContext, sendCommand } from '../platform/client';
 import { Icon } from '../app/components/Icon';
@@ -33,7 +44,12 @@ export function Popup() {
     updateDraft(createEditorDraft(prompt, assignedSlot(library, prompt?.id)));
   }
 
-  async function save(input: PromptInput, speedCopy?: SpeedCopySlot | null) {
+  async function save(
+    input: PromptInput,
+    speedCopy?: SpeedCopySlot | null,
+    newComponents?: NewComponent[],
+    componentUpdates?: ComponentUpdate[],
+  ) {
     if (!draft) return;
     await flushDraft();
     await sendCommand(
@@ -46,11 +62,15 @@ export function Popup() {
               ? {}
               : { expectedSpeedCopy: draft.originalSpeedCopy }),
             input,
+            ...(newComponents === undefined ? {} : { newComponents }),
+            ...(componentUpdates === undefined ? {} : { componentUpdates }),
             ...(speedCopy === undefined ? {} : { speedCopy }),
           }
         : {
             type: 'prompt:create',
             input,
+            ...(newComponents === undefined ? {} : { newComponents }),
+            ...(componentUpdates === undefined ? {} : { componentUpdates }),
             ...(speedCopy === undefined ? {} : { speedCopy }),
           },
     );
@@ -86,7 +106,9 @@ export function Popup() {
     );
 
   const prompts = library?.prompts ?? [];
-  const visible = selectPrompts(prompts, query, tag, 'updated');
+  const content = libraryContent(library);
+  const preview = libraryPreview(library);
+  const visible = selectPrompts(prompts, query, tag, 'updated', content);
   const ready = library !== null && !loadError && loaded;
 
   return (
@@ -250,6 +272,8 @@ export function Popup() {
                   <PopupPrompt
                     key={prompt.id}
                     prompt={prompt}
+                    text={preview(prompt.id)}
+                    resolveContent={content}
                     disabled={!ready}
                     onEdit={edit}
                     onMessage={message}

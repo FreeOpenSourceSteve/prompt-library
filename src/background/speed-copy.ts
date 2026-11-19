@@ -1,3 +1,4 @@
+import { libraryContent } from '../domain/prompts';
 import type { LibraryService } from './library-service';
 
 export function registerSpeedCopyCommands(
@@ -18,6 +19,7 @@ export function registerSpeedCopyCommands(
         throw new Error(
           `Speed-copy ${slot} is unassigned. Assign a prompt in Edit.`,
         );
+      const text = libraryContent(result.library)(prompt.id);
       if (api.runtime.getURL('').startsWith('chrome-extension://')) {
         const url = api.runtime.getURL('clipboard.html');
         const contexts = await api.runtime.getContexts({
@@ -34,7 +36,7 @@ export function registerSpeedCopyCommands(
         try {
           const response: unknown = await api.runtime.sendMessage({
             target: 'clipboard',
-            text: prompt.content,
+            text,
           });
           if (
             typeof response !== 'object' ||
@@ -47,7 +49,7 @@ export function registerSpeedCopyCommands(
           await api.offscreen.closeDocument();
         }
       } else {
-        await navigator.clipboard.writeText(prompt.content);
+        await navigator.clipboard.writeText(text);
       }
       await api.action.setBadgeText({ text: '' });
       await api.action.setTitle({ title: 'Prompt Library' });

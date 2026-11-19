@@ -15,13 +15,22 @@ export const test = base.extend<{
     const context = await playwright.chromium.launchPersistentContext(profile, {
       channel: 'chromium',
       headless: true,
+      ignoreDefaultArgs: ['--disable-extensions'],
       viewport: { width: 1440, height: 1000 },
-      args: [
-        `--disable-extensions-except=${extension}`,
-        `--load-extension=${extension}`,
-      ],
+      args: ['--enable-unsafe-extension-debugging'],
     });
     try {
+      // Explicit installation avoids platform-dependent side-loading flags.
+      // These debugging permissions apply only to this isolated test browser.
+      const browser = context.browser();
+      if (!browser)
+        throw new Error('The extension test browser did not start.');
+      const session = await browser.newBrowserCDPSession();
+      try {
+        await session.send('Extensions.loadUnpacked', { path: extension });
+      } finally {
+        await session.detach();
+      }
       await provide(context);
     } finally {
       await context.close();
@@ -31,7 +40,7 @@ export const test = base.extend<{
   worker: async ({ context }, provide) => {
     const worker =
       context.serviceWorkers()[0] ??
-      (await context.waitForEvent('serviceworker'));
+      (await context.waitForEvent('serviceworker', { timeout: 15_000 }));
     await provide(worker);
   },
   extensionId: async ({ worker }, provide) => {

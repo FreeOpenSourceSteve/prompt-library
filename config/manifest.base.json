@@ -1,20 +1,29 @@
 {
   "manifest_version": 3,
   "name": "Prompt Library",
-  "version": "0.1.1",
-  "description": "Save, organize, and copy plain-text AI prompts. Private, local, and offline.",
+  "version": "0.2.0",
+  "description": "Compose, organize, and copy AI prompts with reusable components. Private, local, and offline.",
   "permissions": ["storage", "clipboardWrite"],
   "commands": {
     "speed-copy-1": {
-      "suggested_key": { "mac": "Command+MacCtrl+Z" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+1",
+        "mac": "Command+MacCtrl+Z"
+      },
       "description": "Copy speed-copy prompt 1"
     },
     "speed-copy-2": {
-      "suggested_key": { "mac": "Command+MacCtrl+X" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+2",
+        "mac": "Command+MacCtrl+X"
+      },
       "description": "Copy speed-copy prompt 2"
     },
     "speed-copy-3": {
-      "suggested_key": { "mac": "Command+MacCtrl+C" },
+      "suggested_key": {
+        "default": "Ctrl+Shift+3",
+        "mac": "Command+MacCtrl+C"
+      },
       "description": "Copy speed-copy prompt 3"
     }
   },

@@ -1,3 +1,4 @@
+import { nativeClipboardText } from '../clipboard';
 import { readFile } from 'node:fs/promises';
 import { test, expect } from './fixtures';
 import { backup, prompt } from '../fixtures';
@@ -36,7 +37,9 @@ test('creates, copies, filters, edits, duplicates, and deletes plain-text prompt
   // Copy must work with only the extension's declared permission. Grant read
   // access afterward, globally: CDP cannot scope permissions to extension origins.
   await context.grantPermissions(['clipboard-read']);
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(raw);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    nativeClipboardText(raw),
+  );
   await card
     .getByRole('button', { name: 'Duplicate Writing assistant' })
     .click();
@@ -104,7 +107,7 @@ test('previews imports, downloads a complete backup, and rejects malformed files
   const result: unknown = JSON.parse(await readFile(path, 'utf8'));
   expect(result).toMatchObject({
     format: 'prompt-library',
-    version: 1,
+    version: 2,
     prompts: [prompt()],
   });
   // Re-importing a backup cannot duplicate or replace saved prompts.
